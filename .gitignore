@@ -1,0 +1,8 @@
+/mongodata
+/obs
+/gomoku/__pycache__
+/gomoku/venv
+/teambidder/__pycache__
+/teambidder/venv
+*.log
+*:Zone.Identifier
