@@ -7,6 +7,7 @@ from gomoku_ai_random_webserver import gomoku_random_ai_webServer
 import logging
 import datetime
 from flask_cors import CORS
+import os
 
 #setup logging basic configuration for logging to a file
 #(if you put this in a route function itself, it won't work)
@@ -17,12 +18,32 @@ app = Flask(__name__)
 
 CORS(app)  # Dit staat CORS toe voor alle domeinen (toegang vanaf browser buiten WSL)
 
-# Stel een geheime sleutel in voor uw applicatie
-app.secret_key = 'mijn_geheime_gomoku_applicatie_sleutel'
+# # Stel een geheime sleutel in voor uw applicatie
+# app.secret_key = 'mijn_geheime_gomoku_applicatie_sleutel'
+
+# # MongoDB-clientconfiguratie
+# client = MongoClient("mongodb://mongodb:mijn_geheime_mongodb_wachtwoord@mongo:27017/")
+# dbGomoku = client.gomoku # selecteert de database 'gomoku' in de Mongo db instance.
+
+
+
+# Stel een geheime sleutel in voor uw applicatie vanuit een omgevingsvariabele
+app.secret_key = os.environ.get('APP_SECRET_KEY', 'standaard_waarde_als_geen_secret_key')
 
 # MongoDB-clientconfiguratie
-client = MongoClient("mongodb://mongodb:mijn_geheime_mongodb_wachtwoord@mongo:27017/")
-dbGomoku = client.gomoku # selecteert de database 'gomoku' in de Mongo db instance.
+mongodb_user = os.environ.get('MONGO_INITDB_ROOT_USERNAME')
+mongodb_password = os.environ.get('MONGO_INITDB_ROOT_PASSWORD')
+mongodb_host = os.environ.get('MONGO_HOST', 'mongo')  # 'mongo' is de standaard host die in docker-compose.yml is opgegeven
+
+# Samenstellen van de MongoDB connection string
+mongodb_uri = f"mongodb://{mongodb_user}:{mongodb_password}@{mongodb_host}:27017/"# de interne mongodb port: altijd 27017
+
+# Verbind met de MongoDB instance
+client = MongoClient(mongodb_uri)
+dbGomoku = client.gomoku  # Selecteert de database 'gomoku'
+
+
+
 
 @app.route('/gomoku/')
 def hello_world():
@@ -99,9 +120,20 @@ def gomoku_play():
 
 @app.route('/gomoku/post-game-result', methods=['POST'])
 def post_game_result():
+
+    # try:
+    #     data = request.get_json()  # Ontvang de JSON-data
+    #     logging.debug("Received data: %s", data)  # Gebruik logging om de data te loggen
+    #     # Verwerk de data hier
+    #     return {"status": "success"}, 200
+    # except Exception as e:
+    #     logging.error(f"Error processing game result: {str(e)}")  # Log de fout met logging.error
+    #     return {"status": "error", "message": str(e)}, 500
+
     try:
         data = request.get_json()
-        app.logger.debug(f"Received data: {data}")  # Gedetailleerde logging van ontvangen data
+        # app.logger.debug(f"Received data: {data}")  # Gedetailleerde logging van ontvangen data
+        logging.debug("Received data: %s", data)  # Gebruik logging om de data te loggen
 
         # Verifieer de ontvangen data
         if not data:
@@ -112,6 +144,8 @@ def post_game_result():
         for field in required_fields:
             if field not in data:
                 raise ValueError(f"Missing field: {field}")
+
+        logging.debug("fields ok")
 
         # We slaan de json op as-is, in onze mongodb:
         mongo_data = {
@@ -128,17 +162,20 @@ def post_game_result():
         result = dbGomoku.games.insert_one(mongo_data)
 
         # Log het resultaat van de MongoDB operatie
-        app.logger.debug(f"Inserted document ID: {result.inserted_id}")
-
+        # app.logger.debug(f"Inserted document ID: {result.inserted_id}")
+        logging.debug(f"Inserted document ID: {result.inserted_id}")
         # Controleer of het document daadwerkelijk is ingevoegd
         inserted_document = dbGomoku.games.find_one({"_id": result.inserted_id})
-        app.logger.debug(f"Inserted document: {inserted_document}")
+
+        logging.debug(f"Inserted document: {inserted_document}")
+        # app.logger.debug(f"Inserted document: {inserted_document}")
 
         # Succesvolle response terugsturen
         return jsonify({'status': 'success'}), 200
 
     except Exception as e:
-        app.logger.error(f"An error occurred: {e}")
+        # app.logger.error(f"An error occurred: {e}")
+        logging.error(f"An error occurred: {e}")
         # Stuur een foutmelding terug als er iets misgaat
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
@@ -249,5 +286,12 @@ def make_gomoku_move(player,data):
                     status=200,
                     mimetype='application/json')
 
+# Haal de poort op vanuit de omgevingsvariabelen (standaard naar 5001 als het niet is ingesteld)
+port = int(os.environ.get('FLASK_RUN_PORT', 5001))
+
+# Haal de waarde van FLASK_ENV op en stel debug in op basis van de omgeving
+flask_env = os.environ.get('FLASK_ENV', 'production')  # Standaard naar 'production'
+debug_mode = flask_env == 'development'  # Debug modus is True als FLASK_ENV 'development' is
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    app.run(host='0.0.0.0', port=port, debug=debug_mode)

@@ -1,23 +1,23 @@
 services:
 
-  mongo:
+  mongo_gomoku:
     networks:
-      - mynetwork
+      - mynetwork_gomoku
     image: mongo:4.4.18
-    container_name: mongo
+    container_name: mongo_gomoku
     restart: unless-stopped
     environment:
       MONGO_INITDB_ROOT_USERNAME: mongodb
       MONGO_INITDB_ROOT_PASSWORD: mijn_geheime_mongodb_wachtwoord
     ports:
-      - "27017:27017"
+      - "27018:27017"
     volumes:
       - ./mongodata:/data/db
 
   gomoku:
     container_name: gomoku
     networks:
-      - mynetwork
+      - mynetwork_gomoku
     build: ./gomoku
     ports:
       - "5001:5001"
@@ -30,8 +30,13 @@ services:
                 # Binnen de docker container wordt dan een app volume gemaakt
                 # waar alles in wordt gezet.
                 # Maar soms is restarten nodig:
-                # docker-compose restart gomoku_backend
+                # docker-compose restart gomoku
     environment:
+      - APP_SECRET_KEY=mijn_geheime_gomoku_applicatie_sleutel
+      - MONGO_INITDB_ROOT_USERNAME=mongodb
+      - MONGO_INITDB_ROOT_PASSWORD=mijn_geheime_mongodb_wachtwoord
+      - MONGO_HOST=mongo_gomoku  # Docker-service naam van MongoDB (gebruikt in de Flask-app voor verbinding)
+      - FLASK_RUN_PORT=5001 
       - FLASK_ENV=development # debug modus: daardoor rebuild de container automatisch na een wijziging.
                              # NB: gebruik in dit geval in de Dockerfile: CMD ["python", "app.py"]
       #- FLASK_ENV=production # production modus: dat geeft beter gedrag bij meer bezoekers.
@@ -39,4 +44,4 @@ services:
     restart: unless-stopped
                 
 networks:
-  mynetwork:
+  mynetwork_gomoku:
