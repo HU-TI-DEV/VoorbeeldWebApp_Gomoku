@@ -20,7 +20,7 @@ services:
       - mynetwork_gomoku
     build: ./gomoku
     ports:
-      - "5001:5001"
+      - "5001:5000"
     volumes:
       - ./gomoku:/app  # Dankzij deze regel, en de volgende regel in je flask-app
                 # kun je je python code on the fly aanpassen, en wordt het
@@ -36,7 +36,6 @@ services:
       - MONGO_INITDB_ROOT_USERNAME=mongodb
       - MONGO_INITDB_ROOT_PASSWORD=mijn_geheime_mongodb_wachtwoord
       - MONGO_HOST=mongo_gomoku  # Docker-service naam van MongoDB (gebruikt in de Flask-app voor verbinding)
-      - FLASK_RUN_PORT=5001 
       - FLASK_ENV=development # debug modus: daardoor rebuild de container automatisch na een wijziging.
                              # NB: gebruik in dit geval in de Dockerfile: CMD ["python", "app.py"]
       #- FLASK_ENV=production # production modus: dat geeft beter gedrag bij meer bezoekers.

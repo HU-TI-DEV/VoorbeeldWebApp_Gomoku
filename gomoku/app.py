@@ -286,8 +286,8 @@ def make_gomoku_move(player,data):
                     status=200,
                     mimetype='application/json')
 
-# Haal de poort op vanuit de omgevingsvariabelen (standaard naar 5001 als het niet is ingesteld)
-port = int(os.environ.get('FLASK_RUN_PORT', 5001))
+port = 5000 # Er is geen reden om intern, binnen deze flask container een andere port dan de standaard
+            # port voor flask applicaties te gebruiken: port 5000.
 
 # Haal de waarde van FLASK_ENV op en stel debug in op basis van de omgeving
 flask_env = os.environ.get('FLASK_ENV', 'production')  # Standaard naar 'production'

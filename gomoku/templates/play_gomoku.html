@@ -451,7 +451,10 @@
         plies: this.gameState.ply
       };
 
-      fetch('http://localhost:5001/gomoku/post-game-result', {
+      const apiUrl = "{{ url_for('post_game_result') }}";
+
+      //fetch('http://localhost:5001/gomoku/post-game-result', {
+      fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
