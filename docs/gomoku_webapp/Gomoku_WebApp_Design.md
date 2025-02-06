@@ -7,9 +7,8 @@ Voor het ontwerp van de WebApp is de volgende ontwerpflow gebruikt:
 - Per webpagina een "Page Design" model up to date houden, welke helpt om het overzicht van wat je maakt te behouden.
 
 ## Achtergrond
-[Je kunt dit hoofdstuk eventueel skippen]  
 
-Tijdens onze opleiding is er een deelopdracht (vermoedelijk zie je die straks in Semeseter 4 voorbijkomen), waar je zelf een zo goed mogelijke AI voor het spel "gomoku" schrijft (dwz: een ai voor een 5 op een rij spel op een 19x19 go bord).
+Tijdens onze opleiding is er een deelopdracht waar je zelf een web applicatie moet hosten of waar je zelf een zo goed mogelijke AI voor het spel "gomoku" schrijft (dwz: een ai voor een 5 op een rij spel op een 19x19 go bord).
 
 Om het mogelijk te maken die ai's tegen elkaar te laten spelen, bieden gomoku-backends een gestandaardiseerde api-interface die via python als volgt aangeroepen kan worden:
 
