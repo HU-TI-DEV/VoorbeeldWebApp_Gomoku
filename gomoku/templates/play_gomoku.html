@@ -177,6 +177,8 @@
     {
       // Load the game state
       this.gameState = gameState;
+      // Add inProgress flag
+      this.aiMoveInProgress = false;
       // Create the grid and initialize the board with the current game state
       const container = document.querySelector('.grid-container');
       this.createGrid(this.gameState.boardSize, container);
@@ -363,8 +365,8 @@
         console.log("The game already ended!");    
         return
       }
-      if((((this.gameState.board.ply%2)==1) && (this.gameState.engineBlack!=Engine.human)) ||
-         (((this.gameState.board.ply%2)==0) && (this.gameState.engineWhite!=Engine.human))   )
+      if((((this.gameState.ply % 2 )==1) && (this.gameState.engineBlack!=Engine.human)) ||
+         (((this.gameState.ply % 2)==0) && (this.gameState.engineWhite!=Engine.human))   )
       {
         console.log("It's not your turn!");
         return
@@ -409,7 +411,7 @@
         this.gameState.board[row][col] = this.gameState.black ? 2 : 1; // 2 for black stone, 1 for white stone
         this.gameState.last_move = [row, col];
         this.gameState.ply += 1;
-        this.gameState.black = ((this.gameState.ply%2)==1); // Switch turns
+        this.gameState.black = ((this.gameState.ply % 2)==1); // Switch turns
         this.gameState.save();
         this.drawStones(this.gameState.board); // Update the board display
         return true
@@ -482,12 +484,12 @@
 
     moveAiIfNeeded(gameState)
     {
-      if(gameState.gameEnded)
+      if(gameState.gameEnded  || this.aiMoveInProgress)
       {
         return 
       }
 
-      let blacksTurnNow = ((gameState.ply%2)==1)
+      let blacksTurnNow = ((gameState.ply % 2)==1)
       let url_ai = 'no_ai'
       if ((blacksTurnNow && gameState.engineBlack===Engine.marius_tng)||
           (!blacksTurnNow && gameState.engineWhite===Engine.marius_tng))
@@ -504,8 +506,13 @@
 
       if(url_ai !== 'no_ai')
       {
+        this.aiMoveInProgress = true;
         console.log('make AI move');
-        this.moveAi(gameState.board, gameState.ply, gameState.last_move, blacksTurnNow, url_ai);
+        this.moveAi(gameState.board, gameState.ply, gameState.last_move, blacksTurnNow, url_ai)
+        .finally(() => {
+        // Allow the next AI move attempt once this one completes.
+        this.aiMoveInProgress = false;
+        });
       }
       // else human, non-ai player is to move (by clicking on a tile)
     }
@@ -526,16 +533,14 @@
       // We communiceren nu niet tussen een nginx server en een (andere-) flask server, 
       // Dus dit is niet meer nodig:
       // fetch('http://localhost:5001/gomoku/make_gomoku_move/ai_marius_tng', {
-      fetch(url_ai, {
+      return fetch(url_ai, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(postData) // Verstuur het object als JSON
       })
-      .then(response => {
-        return response.json()  // Dit geeft de "Promise" door naar de volgende .then.
-      })
+      .then(response => response.json())
       .then(data => {
         // Haal de "move" array uit het JSON-object
         const move = data.move;
